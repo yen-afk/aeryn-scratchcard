@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Scratch Card">
+<meta name="theme-color" content="#B8912A">
+<meta name="description" content="A personalised digital scratch card to ask your bridesmaids. Scratch to reveal the message.">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<title>Aeryn Studio — Bridesmaid Scratch Card</title>
+<style>
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --gold: #B8912A;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  min-height: 100%; min-height: 100dvh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #F9F6F0;
+  color: #2A2018;
+}
+
+/* ── SCREENS ──────────────────────────────────── */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ── BRIDE SCREEN ─────────────────────────────── */
+.bride-screen {
+  max-width: 480px; margin: 0 auto;
+  padding: calc(var(--safe-top) + 20px) 16px calc(var(--safe-bot) + 32px);
+}
+
+.brand-header { text-align: center; margin-bottom: 28px; }
+.brand-name { font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+.brand-tag  { font-size: 12px; color: #A89070; font-style: italic; margin-top: 3px; }
+.page-title { font-size: 22px; font-weight: 500; color: #2A1808; margin-top: 10px; font-family: Georgia, serif; }
+
+.card {
+  background: #fff; border-radius: var(--radius);
+  border: 0.5px solid rgba(0,0,0,0.08);
+  padding: 18px; margin-bottom: 14px;
+}
+.card-title { font-size: 13px; font-weight: 600; color: #2A1808; margin-bottom: 4px; }
+.card-sub   { font-size: 12px; color: #8A7060; margin-bottom: 16px; line-height: 1.5; }
+
+.field { margin-bottom: 12px; }
+.field label {
+  display: block; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: #8A7060; margin-bottom: 5px;
+}
+.field input {
+  width: 100%; padding: 11px 13px;
+  border: 0.5px solid rgba(0,0,0,0.14);
+  border-radius: var(--radius-sm);
+  font-size: 15px; color: #2A1808;
+  background: #FDFAF6; font-family: inherit;
+  -webkit-appearance: none;
+}
+.field input:focus { outline: none; border-color: var(--gold); }
+.field input::placeholder { color: #C0A880; }
+
+/* Theme grid */
+.theme-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; margin-bottom: 4px;
+}
+.theme-opt {
+  padding: 10px 8px;
+  border: 1.5px solid rgba(0,0,0,0.10);
+  border-radius: var(--radius-sm);
+  cursor: pointer; text-align: center;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 6px;
+  transition: all 0.15s; background: #fff;
+}
+.theme-opt.sel { border-width: 2px; }
+.theme-dot { width: 28px; height: 28px; border-radius: 50%; }
+.theme-label { font-size: 11px; font-weight: 600; color: #6A5040; line-height: 1.3; }
+.theme-trend { font-size: 10px; color: #A89070; }
+
+.gen-btn {
+  width: 100%; padding: 15px;
+  border: none; border-radius: var(--radius-sm);
+  font-size: 16px; font-weight: 600;
+  color: #fff; cursor: pointer;
+  transition: opacity 0.15s; letter-spacing: 0.02em;
+}
+.gen-btn:active { opacity: 0.85; }
+
+/* Link result */
+.link-result {
+  background: #fff; border-radius: var(--radius);
+  border: 0.5px solid rgba(0,0,0,0.08);
+  padding: 18px; margin-bottom: 14px;
+  display: none;
+}
+.link-result-title { font-size: 13px; font-weight: 600; color: #2A1808; margin-bottom: 6px; }
+.link-url-box {
+  background: #F9F6F0; border-radius: var(--radius-sm);
+  border: 0.5px solid rgba(0,0,0,0.10);
+  padding: 10px 12px; font-size: 12px;
+  color: #6A5040; word-break: break-all;
+  line-height: 1.55; margin-bottom: 10px;
+  font-family: monospace;
+}
+.copy-btn {
+  width: 100%; padding: 13px;
+  border: none; border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 600;
+  color: #fff; cursor: pointer;
+  transition: opacity 0.15s; margin-bottom: 10px;
+}
+.copy-btn:active { opacity: 0.85; }
+.share-tip {
+  font-size: 12px; color: #8A7060; text-align: center;
+  line-height: 1.55; font-style: italic;
+}
+
+.whatsapp-row {
+  display: flex; gap: 8px; margin-top: 10px;
+}
+.wa-btn {
+  flex: 1; padding: 12px 8px;
+  border: 0.5px solid rgba(0,0,0,0.12);
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; background: #fff;
+  color: #2A1808; text-align: center;
+  transition: background 0.15s;
+  text-decoration: none; display: flex;
+  align-items: center; justify-content: center; gap: 6px;
+}
+.wa-btn:active { background: #F0EAE0; }
+.wa-btn.green { background: #25D366; color: #fff; border-color: #25D366; }
+
+/* ── BRIDESMAID SCREEN ────────────────────────── */
+.bm-screen {
+  max-width: 480px; margin: 0 auto;
+  min-height: 100dvh; display: flex;
+  flex-direction: column;
+  padding: calc(var(--safe-top) + 0px) 0 calc(var(--safe-bot) + 20px);
+}
+
+.bm-top {
+  padding: 32px 24px 20px;
+  text-align: center;
+}
+.bm-from { font-size: 13px; color: #A89070; letter-spacing: 0.05em; margin-bottom: 6px; }
+.bm-greeting {
+  font-size: 28px; font-family: Georgia, serif;
+  font-style: italic; line-height: 1.3;
+}
+.bm-subgreet { font-size: 15px; color: #8A7060; margin-top: 4px; font-style: italic; font-family: Georgia,serif; }
+
+.card-body {
+  flex: 1; padding: 0 16px;
+  display: flex; flex-direction: column; gap: 0;
+}
+
+/* The card itself */
+.sc-card {
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 2px solid #D4AF60;
+  flex: 1;
+}
+.sc-card-inner {
+  padding: 28px 22px 24px;
+  text-align: center;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 0;
+  height: 100%;
+}
+
+/* Quote */
+.sc-quote { width: 100%; margin-bottom: 24px; }
+.sc-qdiv { width: 50%; height: 1px; background: currentColor; opacity: 0.18; margin: 12px auto; }
+.sc-quote-text {
+  font-size: 17px; font-style: italic;
+  line-height: 1.65; font-family: Georgia, serif;
+  margin-bottom: 6px;
+}
+.sc-quote-attr { font-size: 12px; letter-spacing: 0.04em; }
+
+/* Scratch zone */
+.sc-scratch-zone {
+  position: relative; width: 100%;
+  border-radius: 14px; overflow: hidden;
+  cursor: crosshair; user-select: none;
+  touch-action: none; margin-bottom: 22px;
+  flex-shrink: 0;
+}
+.sc-canvas {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%; border-radius: 14px;
+}
+.sc-reveal-layer {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 22px; text-align: center; gap: 8px;
+}
+.sc-reveal-big {
+  font-size: 26px; font-weight: 500;
+  font-family: Georgia, serif; font-style: italic;
+  line-height: 1.3;
+}
+.sc-reveal-hint {
+  font-size: 11px; opacity: 0.7;
+  letter-spacing: 0.07em; text-transform: uppercase;
+}
+
+/* Hidden bottom */
+.sc-hidden {
+  width: 100%; position: relative;
+  transition: filter 0.65s ease, opacity 0.65s ease;
+}
+.sc-hidden.locked {
+  filter: blur(9px); opacity: 0.3;
+  pointer-events: none; user-select: none;
+}
+.sc-lock-overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 6px; z-index: 2;
+  transition: opacity 0.4s;
+}
+.sc-lock-overlay.gone { opacity: 0; pointer-events: none; }
+.sc-lock-emoji { font-size: 28px; }
+.sc-lock-label { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; }
+.sc-ask {
+  font-size: 22px; font-style: italic;
+  font-family: Georgia, serif; line-height: 1.4;
+  margin-bottom: 18px;
+}
+.sc-detail {
+  width: 100%; border-bottom: 0.5px solid;
+  padding: 10px 0; display: flex; align-items: baseline; gap: 12px;
+}
+.sc-detail:last-child { border-bottom: none; }
+.sc-detail-lbl {
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.08em; width: 46px;
+  flex-shrink: 0; opacity: 0.5; font-weight: 600;
+}
+.sc-detail-val {
+  font-size: 15px; font-style: italic;
+  font-family: Georgia, serif; flex: 1;
+}
+
+/* Footer */
+.bm-footer {
+  padding: 20px 24px 0;
+  text-align: center; font-size: 13px;
+  font-style: italic; font-family: Georgia,serif;
+}
+
+/* Install banner */
+.install-banner {
+  display: none; align-items: center; gap: 10px;
+  background: #2A1808; padding: 10px 16px;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+}
+.install-banner.show { display: flex; }
+.ib-text { font-size: 13px; color: #fff; flex: 1; line-height: 1.4; }
+.ib-text span { display: block; font-size: 11px; color: rgba(255,255,255,0.6); }
+.ib-btn { padding: 7px 14px; background: var(--gold); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; }
+.ib-close { color: rgba(255,255,255,0.5); font-size: 20px; cursor: pointer; padding: 2px; }
+</style>
+</head>
+<body>
+
+<div class="install-banner" id="inst-bar">
+  <div class="ib-text">Add to home screen<span>Works offline · Free forever</span></div>
+  <button class="ib-btn" id="inst-btn">Install</button>
+  <span class="ib-close" id="inst-close">✕</span>
+</div>
+
+<!-- ═══════════════ BRIDE SCREEN ════════════════ -->
+<div class="screen active" id="screen-bride">
+<div class="bride-screen">
+
+  <div class="brand-header">
+    <div class="brand-name">Aeryn Studio</div>
+    <div class="brand-tag">Beautifully on purpose.</div>
+    <div class="page-title">Create your scratch card</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Choose a theme</div>
+    <div class="card-sub">Pick the one that matches your wedding colours</div>
+    <div class="theme-grid" id="theme-grid"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Bridesmaid's details</div>
+    <div class="card-sub">Fill these in — a unique link is created for each bridesmaid</div>
+    <div class="field">
+      <label>Bridesmaid's name</label>
+      <input id="f-name" type="text" placeholder="e.g. Sarah" maxlength="30">
+    </div>
+    <div class="field">
+      <label>Your name (the bride)</label>
+      <input id="f-from" type="text" placeholder="e.g. Emma" maxlength="30">
+    </div>
+    <div class="field">
+      <label>Wedding date</label>
+      <input id="f-date" type="text" placeholder="e.g. 14th June 2026" maxlength="40">
+    </div>
+    <div class="field">
+      <label>Venue</label>
+      <input id="f-venue" type="text" placeholder="e.g. Elmwood Manor" maxlength="50">
+    </div>
+    <button class="gen-btn" id="gen-btn" onclick="generateLink()">Generate bridesmaid's link →</button>
+  </div>
+
+  <div class="link-result" id="link-result">
+    <div class="link-result-title" id="link-title">Sarah's personal link is ready</div>
+    <div class="link-url-box" id="link-url"></div>
+    <button class="copy-btn" id="copy-btn" onclick="copyLink()">Copy link</button>
+    <div class="whatsapp-row">
+      <a class="wa-btn green" id="wa-btn" href="#" target="_blank">WhatsApp</a>
+      <button class="wa-btn" onclick="showBmView()">Preview card →</button>
+    </div>
+    <div class="share-tip" style="margin-top:10px">
+      Send this link to your bridesmaid on WhatsApp, iMessage, or Instagram DM.<br>
+      She opens it and scratches to reveal your message.
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ═══════════════ BRIDESMAID SCREEN ════════════ -->
+<div class="screen" id="screen-bm">
+<div class="bm-screen">
+
+  <div class="bm-top">
+    <div class="bm-from" id="bm-from-lbl">A message from Emma</div>
+    <div class="bm-greeting" id="bm-greeting">Hi Sarah,</div>
+    <div class="bm-subgreet">I have something to ask you...</div>
+  </div>
+
+  <div class="card-body">
+    <div class="sc-card" id="sc-card">
+      <div class="sc-card-inner">
+
+        <div class="sc-quote">
+          <div class="sc-qdiv"></div>
+          <div class="sc-quote-text" id="sc-q-text"></div>
+          <div class="sc-quote-attr" id="sc-q-attr"></div>
+          <div class="sc-qdiv"></div>
+        </div>
+
+        <div class="sc-scratch-zone" id="sc-zone" style="height:200px">
+          <div class="sc-reveal-layer" id="sc-reveal-layer">
+            <div class="sc-reveal-big" id="sc-reveal-big">Will you be my Bridesmaid?</div>
+            <div class="sc-reveal-hint">scratch to reveal</div>
+          </div>
+          <canvas id="sc-canvas" class="sc-canvas"></canvas>
+        </div>
+
+        <div class="sc-hidden locked" id="sc-hidden">
+          <div class="sc-lock-overlay" id="sc-lock-overlay">
+            <div class="sc-lock-emoji">🔒</div>
+            <div class="sc-lock-label" id="sc-lock-lbl">Scratch above to reveal</div>
+          </div>
+          <div class="sc-ask" id="sc-ask"></div>
+          <div class="sc-detail" id="sc-row-f"><div class="sc-detail-lbl" id="sc-lbl-f">For</div><div class="sc-detail-val" id="sc-d-name"></div></div>
+          <div class="sc-detail" id="sc-row-fr"><div class="sc-detail-lbl" id="sc-lbl-fr">From</div><div class="sc-detail-val" id="sc-d-from"></div></div>
+          <div class="sc-detail" id="sc-row-dt"><div class="sc-detail-lbl" id="sc-lbl-dt">Date</div><div class="sc-detail-val" id="sc-d-date"></div></div>
+          <div class="sc-detail" id="sc-row-vn"><div class="sc-detail-lbl" id="sc-lbl-vn">Venue</div><div class="sc-detail-val" id="sc-d-venue"></div></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="bm-footer" id="bm-footer"></div>
+
+</div>
+</div>
+
+<script>
+const THEMES = [
+  {id:'gold',      name:'Gold & Ivory',    trend:'Most popular',  dot:'#C4A355',bg:'#FFFDF5',border:'#D4AF60',scratchBg:'#B8912A',scratchTxt:'#fff',accent:'#8A6A10',textDk:'#4A3800',textLt:'#AA9050',detailBdr:'#D4C080',quote:'"A good friend knows all your stories.\nA best friend helped you write them."',attr:'— Unknown',ask:'Will you be my Bridesmaid?'},
+  {id:'pink',      name:'Pastel Pink',     trend:'Trending 2026', dot:'#E8A0B0',bg:'#FFF8FA',border:'#E8A0B0',scratchBg:'#D97090',scratchTxt:'#fff',accent:'#B04868',textDk:'#4A1828',textLt:'#C088A0',detailBdr:'#EEB8C8',quote:'"Friendship is the comfort of knowing\nthat even in silence you are understood."',attr:'— Unknown',ask:'Will you be my Bridesmaid?'},
+  {id:'blue',      name:'Sky Blue',        trend:'Classic',       dot:'#7AAED4',bg:'#F5FAFF',border:'#7AAED4',scratchBg:'#4A88B8',scratchTxt:'#fff',accent:'#2A6090',textDk:'#0A2840',textLt:'#7AAABB',detailBdr:'#A8C8E8',quote:'"There is nothing I would not do\nfor those who are truly my friends."',attr:'— Jane Austen',ask:'Will you be my Bridesmaid?'},
+  {id:'emerald',   name:'Emerald',         trend:'#1 for 2026',   dot:'#2A7A4A',bg:'#F4FAF6',border:'#3A8A5A',scratchBg:'#2A7A4A',scratchTxt:'#fff',accent:'#1A5A34',textDk:'#0A2818',textLt:'#6AAA80',detailBdr:'#90C8A8',quote:'"A true friend is the greatest\nof all blessings."',attr:'— François de La Rochefoucauld',ask:'Will you be my Bridesmaid?'},
+  {id:'burgundy',  name:'Burgundy',        trend:'Autumn classic', dot:'#8B2040',bg:'#FDF5F7',border:'#A03050',scratchBg:'#8B2040',scratchTxt:'#fff',accent:'#6A1030',textDk:'#3A0818',textLt:'#B07080',detailBdr:'#D8A0B0',quote:'"Friends are the family\nwe choose for ourselves."',attr:'— Edna Buchanan',ask:'Will you be my Bridesmaid?'},
+  {id:'mocha',     name:'Mocha & Cream',   trend:'Pantone 2025',  dot:'#8B6A50',bg:'#FAF7F2',border:'#A07858',scratchBg:'#8B6A50',scratchTxt:'#fff',accent:'#6A4A30',textDk:'#3A2818',textLt:'#A88870',detailBdr:'#C8A888',quote:'"Good friends are like stars —\nyou don\'t always see them,\nbut you know they\'re always there."',attr:'— Unknown',ask:'Will you be my Bridesmaid?'},
+  {id:'lavender',  name:'Dusty Lavender',  trend:'Rising fast',   dot:'#9080B8',bg:'#F8F5FF',border:'#9878C0',scratchBg:'#7860A8',scratchTxt:'#fff',accent:'#584088',textDk:'#281848',textLt:'#9880C0',detailBdr:'#C0A8E0',quote:'"In the sweetness of friendship\nlet there be laughter and joy."',attr:'— Kahlil Gibran',ask:'Will you be my Bridesmaid?'},
+  {id:'terracotta',name:'Terracotta',      trend:'Boho classic',  dot:'#C06840',bg:'#FDF7F4',border:'#C07050',scratchBg:'#B05838',scratchTxt:'#fff',accent:'#883820',textDk:'#3A1808',textLt:'#C09070',detailBdr:'#D8A880',quote:'"Side by side or miles apart,\nreal friends are always close to the heart."',attr:'— Unknown',ask:'Will you be my Bridesmaid?'},
+];
+
+// ── STATE ──────────────────────────────────────────────────────
+let selIdx = 0;
+let isDrawing = false;
+let revealed = false;
+let ctx = null;
+let currentLink = '';
+let currentData = {};
+
+// ── THEME GRID ─────────────────────────────────────────────────
+function buildThemeGrid() {
+  const grid = document.getElementById('theme-grid');
+  grid.innerHTML = THEMES.map((t, i) => `
+    <div class="theme-opt${i===0?' sel':''}" id="to${i}" onclick="selTheme(${i})"
+      style="${i===0?`border-color:${t.dot};background:${t.dot}14`:''}">
+      <div class="theme-dot" style="background:${t.dot}"></div>
+      <div class="theme-label" style="${i===0?`color:${t.accent}`''}">${t.name}</div>
+      <div class="theme-trend">${t.trend}</div>
+    </div>`).join('');
+  document.getElementById('gen-btn').style.background = THEMES[0].scratchBg;
+}
+
+function selTheme(i) {
+  selIdx = i;
+  const t = THEMES[i];
+  THEMES.forEach((td, idx) => {
+    const el = document.getElementById('to' + idx);
+    const on = idx === i;
+    el.classList.toggle('sel', on);
+    el.style.borderColor = on ? td.dot : '';
+    el.style.background  = on ? td.dot + '14' : '';
+    el.querySelector('.theme-label').style.color = on ? td.accent : '';
+  });
+  document.getElementById('gen-btn').style.background = t.scratchBg;
+}
+
+// ── GENERATE LINK ──────────────────────────────────────────────
+function v(id) { return document.getElementById(id).value.trim(); }
+
+function generateLink() {
+  const t     = THEMES[selIdx];
+  const name  = v('f-name')  || 'Sarah';
+  const from  = v('f-from')  || 'Emma';
+  const date  = v('f-date')  || '14th June 2026';
+  const venue = v('f-venue') || 'Elmwood Manor';
+
+  currentData = { t, name, from, date, venue };
+
+  const base   = window.location.origin + window.location.pathname;
+  const params = new URLSearchParams({ theme: t.id, name, from, date, venue });
+  currentLink  = base + '?' + params.toString();
+
+  document.getElementById('link-title').textContent = `${name}'s personal link is ready`;
+  document.getElementById('link-url').textContent   = currentLink;
+  document.getElementById('copy-btn').style.background = t.scratchBg;
+
+  const waMsg = encodeURIComponent(`I have something to ask you... open this 🎀\n${currentLink}`);
+  document.getElementById('wa-btn').href = `https://wa.me/?text=${waMsg}`;
+
+  document.getElementById('link-result').style.display = 'block';
+  document.getElementById('link-result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function copyLink() {
+  navigator.clipboard?.writeText(currentLink).catch(() => {});
+  const btn = document.getElementById('copy-btn');
+  btn.textContent = 'Copied! ✓';
+  setTimeout(() => btn.textContent = 'Copy link', 2200);
+}
+
+// ── BRIDESMAID VIEW ────────────────────────────────────────────
+function loadBmView(t, name, from, date, venue) {
+  // Header
+  document.getElementById('bm-from-lbl').textContent = `A message from ${from}`;
+  document.getElementById('bm-from-lbl').style.color = t.textLt;
+  document.getElementById('bm-greeting').textContent = `Hi ${name},`;
+  document.getElementById('bm-greeting').style.color = t.accent;
+
+  // Card colours
+  const card = document.getElementById('sc-card');
+  card.style.background   = t.bg;
+  card.style.borderColor  = t.border;
+
+  // Quote
+  const q = t.quote.replace(/\n/g, ' ');
+  document.getElementById('sc-q-text').textContent = q;
+  document.getElementById('sc-q-text').style.color = t.textDk;
+  document.getElementById('sc-q-attr').textContent = t.attr;
+  document.getElementById('sc-q-attr').style.color = t.textLt;
+
+  // Scratch zone
+  document.getElementById('sc-zone').style.background = t.scratchBg;
+  document.getElementById('sc-reveal-big').textContent = t.ask;
+  document.getElementById('sc-reveal-big').style.color = t.scratchTxt;
+  document.getElementById('sc-zone').querySelector('.sc-reveal-hint').style.color = t.scratchTxt;
+
+  // Hidden section
+  document.getElementById('sc-ask').textContent = t.ask;
+  document.getElementById('sc-ask').style.color = t.accent;
+  document.getElementById('sc-d-name').textContent  = name;
+  document.getElementById('sc-d-from').textContent  = from;
+  document.getElementById('sc-d-date').textContent  = date;
+  document.getElementById('sc-d-venue').textContent = venue;
+  ['sc-d-name','sc-d-from','sc-d-date','sc-d-venue'].forEach(id =>
+    document.getElementById(id).style.color = t.textDk);
+  ['sc-row-f','sc-row-fr','sc-row-dt','sc-row-vn'].forEach(id =>
+    document.getElementById(id).style.borderColor = t.detailBdr);
+  ['sc-lbl-f','sc-lbl-fr','sc-lbl-dt','sc-lbl-vn'].forEach(id =>
+    document.getElementById(id).style.color = t.accent);
+  document.getElementById('sc-lock-lbl').style.color = t.accent;
+  document.getElementById('bm-footer').textContent  = `With all my love, ${from} 💛`;
+  document.getElementById('bm-footer').style.color  = t.textLt;
+
+  // Reset lock state
+  revealed = false;
+  document.getElementById('sc-hidden').classList.add('locked');
+  document.getElementById('sc-lock-overlay').classList.remove('gone');
+
+  // Theme color on meta
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', t.bg);
+
+  initScratch(t);
+}
+
+function showBmView() {
+  const { t, name, from, date, venue } = currentData;
+  loadBmView(t, name, from, date, venue);
+  document.getElementById('screen-bride').classList.remove('active');
+  document.getElementById('screen-bm').classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── SCRATCH MECHANIC ───────────────────────────────────────────
+function initScratch(t) {
+  revealed = false;
+  const old    = document.getElementById('sc-canvas');
+  const zone   = document.getElementById('sc-zone');
+  const pw     = Math.max(zone.offsetWidth || 340, 280);
+  const ph     = 200;
+  zone.style.height = ph + 'px';
+
+  const canvas = document.createElement('canvas');
+  canvas.id = 'sc-canvas';
+  canvas.className = 'sc-canvas';
+  canvas.width = pw; canvas.height = ph;
+  old.parentNode.replaceChild(canvas, old);
+  ctx = canvas.getContext('2d');
+
+  // Fill scratch layer
+  ctx.fillStyle = t.scratchBg;
+  ctx.fillRect(0, 0, pw, ph);
+
+  // Dot texture
+  ctx.fillStyle = 'rgba(0,0,0,0.09)';
+  for (let r = 0; r < 5; r++)
+    for (let c = 0; c < 10; c++) {
+      ctx.beginPath();
+      ctx.arc(26 + c * (pw - 52) / 9, 26 + r * 32, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+  // Coin ring
+  const cx2 = pw / 2, cy2 = ph / 2 - 12;
+  ctx.strokeStyle = 'rgba(255,255,255,0.42)'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(cx2, cy2, 36, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.13)';
+  ctx.beginPath(); ctx.arc(cx2, cy2, 36, 0, Math.PI * 2); ctx.fill();
+
+  // Coin symbol
+  ctx.fillStyle = 'rgba(255,255,255,0.90)';
+  ctx.font = 'bold 28px Georgia,serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('₵', cx2, cy2);
+
+  // Labels
+  ctx.font = 'bold 13px -apple-system,sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.82)';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText('SCRATCH  HERE', pw / 2, ph / 2 + 32);
+  ctx.font = '11px -apple-system,sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.50)';
+  ctx.fillText('use your finger', pw / 2, ph / 2 + 52);
+
+  // Event listeners
+  canvas.addEventListener('mousedown', e => { isDrawing = true; scratchAt(e, canvas); });
+  canvas.addEventListener('mousemove', e => { if (isDrawing) scratchAt(e, canvas); });
+  document.addEventListener('mouseup',  () => isDrawing = false);
+  canvas.addEventListener('touchstart', e => { isDrawing = true; scratchAtT(e, canvas); }, { passive: true });
+  canvas.addEventListener('touchmove',  e => { if (isDrawing) scratchAtT(e, canvas); }, { passive: true });
+  document.addEventListener('touchend', () => isDrawing = false);
+}
+
+function scratchAt(e, canvas) {
+  const r = canvas.getBoundingClientRect();
+  doScratch(e.clientX - r.left, e.clientY - r.top, canvas);
+}
+function scratchAtT(e, canvas) {
+  if (!e.touches[0]) return;
+  const r = canvas.getBoundingClientRect();
+  doScratch(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top, canvas);
+}
+function doScratch(x, y, canvas) {
+  if (!ctx || revealed) return;
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.beginPath(); ctx.arc(x, y, 30, 0, Math.PI * 2); ctx.fill();
+  // Check percentage cleared
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  let clear = 0;
+  for (let i = 3; i < data.length; i += 4) if (data[i] < 128) clear++;
+  if (clear / (canvas.width * canvas.height) > 0.50) {
+    revealed = true;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    document.getElementById('sc-lock-overlay').classList.add('gone');
+    setTimeout(() => {
+      document.getElementById('sc-hidden').classList.remove('locked');
+    }, 320);
+  }
+}
+
+// ── URL PARAM DETECTION ────────────────────────────────────────
+function checkURLParams() {
+  const p = new URLSearchParams(window.location.search);
+  const themeId = p.get('theme');
+  if (!themeId) return; // bride view
+
+  const t = THEMES.find(th => th.id === themeId) || THEMES[0];
+  const name  = p.get('name')  || 'Friend';
+  const from  = p.get('from')  || '';
+  const date  = p.get('date')  || '';
+  const venue = p.get('venue') || '';
+
+  // Go straight to bridesmaid view
+  document.getElementById('screen-bride').classList.remove('active');
+  document.getElementById('screen-bm').classList.add('active');
+  loadBmView(t, name, from, date, venue);
+}
+
+// ── PWA INSTALL ────────────────────────────────────────────────
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  document.getElementById('inst-bar').classList.add('show');
+  // Push content down so banner doesn't cover it
+  document.querySelector('.bride-screen').style.paddingTop =
+    `calc(var(--safe-top) + 60px)`;
+});
+document.getElementById('inst-btn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('inst-bar').classList.remove('show');
+});
+document.getElementById('inst-close').addEventListener('click', () => {
+  document.getElementById('inst-bar').classList.remove('show');
+});
+
+// ── SERVICE WORKER ─────────────────────────────────────────────
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+
+// ── INIT ───────────────────────────────────────────────────────
+buildThemeGrid();
+checkURLParams();
+</script>
+</body>
+</html>
