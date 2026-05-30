@@ -421,7 +421,7 @@ function buildThemeGrid() {
     <div class="theme-opt${i===0?' sel':''}" id="to${i}" onclick="selTheme(${i})"
       style="${i===0?`border-color:${t.dot};background:${t.dot}14`:''}">
       <div class="theme-dot" style="background:${t.dot}"></div>
-      <div class="theme-label" style="${i===0?`color:${t.accent}`''}">${t.name}</div>
+      <div class="theme-label" style="${i===0?`color:${t.accent}`:''}">${t.name}</div>
       <div class="theme-trend">${t.trend}</div>
     </div>`).join('');
   document.getElementById('gen-btn').style.background = THEMES[0].scratchBg;
