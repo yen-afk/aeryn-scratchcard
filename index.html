@@ -417,13 +417,17 @@ let currentData = {};
 // ── THEME GRID ─────────────────────────────────────────────────
 function buildThemeGrid() {
   const grid = document.getElementById('theme-grid');
-  grid.innerHTML = THEMES.map((t, i) => `
-    <div class="theme-opt${i===0?' sel':''}" id="to${i}" onclick="selTheme(${i})"
-      style="${i===0?`border-color:${t.dot};background:${t.dot}14`:''}">
-      <div class="theme-dot" style="background:${t.dot}"></div>
-      <div class="theme-label" style="${i===0?`color:${t.accent}`:''}">${t.name}</div>
-      <div class="theme-trend">${t.trend}</div>
-    </div>`).join('');
+  grid.innerHTML = THEMES.map(function(t, i) {
+    var sel = i === 0;
+    var cls = 'theme-opt' + (sel ? ' sel' : '');
+    var sty = sel ? 'border-color:' + t.dot + ';background:' + t.dot + '22' : '';
+    var lsty = sel ? 'color:' + t.accent : '';
+    return '<div class="' + cls + '" id="to' + i + '" onclick="selTheme(' + i + ')" style="' + sty + '">' +
+      '<div class="theme-dot" style="background:' + t.dot + '"></div>' +
+      '<div class="theme-label" style="' + lsty + '">' + t.name + '</div>' +
+      '<div class="theme-trend">' + t.trend + '</div>' +
+      '</div>';
+  }).join('');
   document.getElementById('gen-btn').style.background = THEMES[0].scratchBg;
 }
 
